@@ -5,6 +5,7 @@ import os
 import traceback
 import pyotp
 from qrcode import QRCode, constants
+from PIL import Image
 
 
 class GoogleAuthenticatorClient:
@@ -37,13 +38,13 @@ class GoogleAuthenticatorClient:
             if save_to_file:
                 base_dir = os.path.dirname(os.path.abspath(__file__))
                 dir_path = os.path.join(base_dir, 'static', 'image')
+                filepath = dir_path + os.sep + self.secret_key + '.png'
                 if not os.path.exists(dir_path):
                     os.makedirs(dir_path)
-                    filepath = dir_path + os.sep + self.secret_key + '.png'
                 img.save(filepath)
                 return True, filepath
             else:
-                return img.get_image()
+                return False, img.get_image()
         except Exception as e:
             traceback.print_exc()
             return False, None
@@ -60,8 +61,12 @@ if __name__ == '__main__':
     google_auth_ = GoogleAuthenticatorClient()
     secret = google_auth_.create_secret()
     print(secret)
-    image = google_auth_.create_secret_qrcode(name='slp', issuer_name='GoldBull', save_to_file=False)
-    print(image.show())
+    qrcode_result = google_auth_.create_secret_qrcode(name='slp', issuer_name='GoldBull', save_to_file=True)
+    if qrcode_result[0]:
+        Image.open(qrcode_result[1]).show()
+    else:
+        if qrcode_result[1] is not None:
+            qrcode_result[1].show()
 
     # 验证
     res = google_auth_.verify_code_func(verify_code='731582')
